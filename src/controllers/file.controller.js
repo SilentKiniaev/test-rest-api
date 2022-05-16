@@ -1,11 +1,12 @@
 const path = require('path');
 const fs = require('fs');
+const { File } = require('../models');
 
 async function upload(req, res) {
     try {
         console.log(req.file);
 
-        const file = await req.adapter.File.create(req.file);
+        const file = await File.create(req.file);
         await req.state.user.addFile(file);
 
         res.status(201).send();
@@ -18,7 +19,7 @@ async function list(req, res) {
     try {
         const { page = 1, size = 10} = req.query;
 
-        const files = await req.adapter.File.findAll({
+        const files = await File.findAll({
             offset: (page - 1) * size,
             limit: size
         });
@@ -35,7 +36,7 @@ async function deleteFile(req, res) {
     try {
         const { id } = req.params;
 
-        const count = await req.adapter.File.destroy({
+        const count = await File.destroy({
             where: {
                 id
             }
@@ -55,7 +56,7 @@ async function getFile(req, res) {
     try {
         const { id } = req.params;
 
-        const file = await req.adapter.File.findByPk(id);
+        const file = await File.findByPk(id);
 
         if (!file) {
             return res.status(400).send({message: 'File not found'});
@@ -71,7 +72,7 @@ async function downloadFile(req, res) {
     try {
         const { id } = req.params;
 
-        const file = await req.adapter.File.findByPk(id);
+        const file = await File.findByPk(id);
 
         if (!file) {
             return res.status(400).send({message: 'File not found'});
@@ -87,7 +88,7 @@ async function updateFile(req, res) {
     try {
         const { id } = req.params;
 
-        const file = await req.adapter.File.findByPk(id);
+        const file = await File.findByPk(id);
         
         console.log(file);
 
@@ -103,8 +104,8 @@ async function updateFile(req, res) {
         file.size = req.file.size;
         await file.save();
 
-        if (fs.existsSync(filepath) && filepath !== path.join(file.filename)) {
-            fs.unlinkSync(filepath);
+        if (filepath !== path.join(file.filename)) {
+            fs.unlink(filepath);
         }
         
         res.send();

@@ -1,32 +1,14 @@
 const express = require('express');
 const app = express();
-const { Sequelize } = require('sequelize');
 const cors = require('cors');
 const helmet = require('helmet');
 const config = require('./config');
-const sequelize = new Sequelize(config.database);
-const User = require('./src/models/user')(sequelize);
-const File = require('./src/models/file')(sequelize);
-const Token = require('./src/models/token')(sequelize);
 const routes = require('./src/routes');
-
-User.hasMany(File);
-File.belongsTo(User);
-
-const adapter = {
-    sequelize,
-    User,
-    File,
-    Token
-};
+const { sequelize } = require('./src/models');
 
 app.use(express.json());
 app.use(helmet());
 app.use(cors());
-app.use((req, __, next) => {
-    req.adapter = adapter;
-    next();
-});
 app.use('/', routes);
 
 (async () => {

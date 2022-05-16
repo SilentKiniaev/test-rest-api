@@ -2,12 +2,13 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const { Op } = require('sequelize');
 const config = require('../../config');
+const { User, Token } = require('../models');
 
-async function signin({ body, adapter }, res) {
+async function signin({ body }, res) {
     try {
         console.log('signin', body);
 
-        const user = await adapter.User.findOne({
+        const user = await User.findOne({
             where: {    
                 [Op.or]: {
                     email: body.id,
@@ -46,7 +47,7 @@ async function signin({ body, adapter }, res) {
     }
 };
 
-async function token({ body, query, adapter }, res) {
+async function token({ body, query }, res) {
     try {
         const token = body?.refreshToken ?? query.refreshToken;
 
@@ -59,10 +60,10 @@ async function token({ body, query, adapter }, res) {
             return decoded;
         });
 
-        const user = await adapter.User.findByPk(decoded.id).then(data => data.toJSON());
+        const user = await User.findByPk(decoded.id).then(data => data.toJSON());
         const {password, ...payload} = user;
 
-        await req.adapter.Token.create({token, type: 'refresh'});
+        await Token.create({token, type: 'refresh'});
 
         const accessToken = jwt.sign(payload, config.jwt.secret, {expiresIn: config.jwt.accessExpiresIn});
         const refreshToken = jwt.sign(payload, config.jwt.secret, {expiresIn: config.jwt.refreshExpiresIn});
@@ -76,12 +77,12 @@ async function token({ body, query, adapter }, res) {
     }
 };
 
-async function signup({ body, adapter }, res) {
+async function signup({ body }, res) {
     try {
         console.log('signup', body);
 
         const hashedPassword = await bcrypt.hash(body.password, 8);
-        const {password, ...payload} = await adapter.User.create({...body, password: hashedPassword}).then(data => data.toJSON());
+        const {password, ...payload} = await User.create({...body, password: hashedPassword}).then(data => data.toJSON());
 
         const accessToken = jwt.sign(payload, config.jwt.secret, {expiresIn: config.jwt.accessExpiresIn});
         const refreshToken = jwt.sign(payload, config.jwt.secret, {expiresIn: config.jwt.refreshExpiresIn});
@@ -99,7 +100,7 @@ async function logout(req, res) {
     try {
         const {password, ...payload} = req.state.user.toJSON();
 
-        await req.adapter.Token.create({token: req.state.accessToken});
+        await Token.create({token: req.state.accessToken});
 
         const accessToken = jwt.sign(payload, config.jwt.secret, {expiresIn: config.jwt.accessExpiresIn});
         const refreshToken = jwt.sign(payload, config.jwt.secret, {expiresIn: config.jwt.refreshExpiresIn});

@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const config = require('../../config');
+const { User, Token } = require('../models');
 
 const checkAuth = async (req, res, next) => {
     try {
@@ -15,7 +16,7 @@ const checkAuth = async (req, res, next) => {
             return decoded;
         });
 
-        const blocked = await req.adapter.Token.findOne({
+        const blocked = await Token.findOne({
             where: {
                 token
             }
@@ -25,7 +26,7 @@ const checkAuth = async (req, res, next) => {
             return res.status(401).send('Unauthorized');         
         }
 
-        const user = await req.adapter.User.findByPk(decoded.id);
+        const user = await User.findByPk(decoded.id);
         req.state = {
             accessToken: token,
             user
