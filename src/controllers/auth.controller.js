@@ -81,6 +81,19 @@ async function signup({ body }, res) {
     try {
         console.log('signup', body);
 
+        const user = await User.findOne({
+            where: {
+                [Op.or]: {
+                    email: req.body.email,
+                    phone: req.body.phone
+                }
+            }
+        });
+
+        if (user) {
+            return res.status(400).send({message: 'Try another data'});
+        }
+
         const hashedPassword = await bcrypt.hash(body.password, 8);
         const {password, ...payload} = await User.create({...body, password: hashedPassword}).then(data => data.toJSON());
 
